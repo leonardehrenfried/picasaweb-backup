@@ -1,3 +1,2 @@
 source 'https://rubygems.org'
-gem "gdata", "~> 1.1.2"
-
+gem "gdata_19", "~> 1.1.5"
