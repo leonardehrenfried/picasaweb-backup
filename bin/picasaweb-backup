@@ -1,0 +1,26 @@
+#!/usr/bin/ruby
+require 'rubygems'
+require 'optparse'
+require 'picasaweb-backup'
+
+data = {}
+
+OptionParser.new('Backing up your Picasaweb photos') do |opt|
+  opt.version = '2'
+  opt.on('--dir DIR') do |dir|
+    data[:dir] = dir
+  end
+  begin
+    opt.parse!(ARGV)
+  rescue
+    puts usage
+   end
+end
+
+begin
+  puts "Hello World"
+rescue => e
+  puts e.message
+  puts usage
+end
+
