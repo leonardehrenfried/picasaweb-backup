@@ -23,7 +23,7 @@ begin
   verify_account account
   client = picasa_client account["username"], account["password"]
   albums = picasa_albums client
-  dir_name = "picasa_#{albums.first[:user]}"
+  dir_name = "Albums"
   
   if !File.directory? dir_name
     Dir.mkdir dir_name
