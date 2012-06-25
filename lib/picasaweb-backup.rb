@@ -18,13 +18,20 @@ module Picasaweb
   end
 end
 
+def verify_account account
+  if account["username"].nil?
+    raise "Please add your username to account.yml"
+  elsif account["password"].nil?
+    raise "Please add your password to account.yml"
+  end
+end
+
 # config_path should point to a yaml file that looks like this:
 #     username: costan
 #     password: "secret"
-def picasa_client(config_path)
-  account = File.open(config_path, 'r') { |f| YAML.load f }
+def picasa_client(username, password)
   client = GData::Client::Photos.new
-  client.clientlogin(account['username'], account['password'])
+  client.clientlogin(username, password)
   client
 end
 

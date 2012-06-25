@@ -4,6 +4,7 @@ require 'optparse'
 require 'picasaweb-backup'
 
 data = {}
+usage = %{picasaweb-backup v.#{Picasaweb::Backup::VERSION}}
 
 OptionParser.new('Backing up your Picasaweb photos') do |opt|
   opt.version = '2'
@@ -13,13 +14,14 @@ OptionParser.new('Backing up your Picasaweb photos') do |opt|
   begin
     opt.parse!(ARGV)
   rescue
-    puts usage
+    puts usage 
    end
 end
 
 begin
-  puts "Hello World"
-  client = picasa_client 'account.yml'
+  account = File.open("account.yml", 'r') { |f| YAML.load f }
+  verify_account account
+  client = picasa_client account["username"], account["password"]
   albums = picasa_albums client
   dir_name = "picasa_#{albums.first[:user]}"
   Dir.mkdir dir_name
@@ -38,7 +40,7 @@ begin
       end
 
       photos.each do |photo|
-        print "#{album[:title]}/#{photo[:title]}\n"        
+        puts "Downloading #{album[:title]}/#{photo[:title]}"
         response = nil
         until response
           begin
