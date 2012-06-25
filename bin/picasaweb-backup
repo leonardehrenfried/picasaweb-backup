@@ -19,6 +19,39 @@ end
 
 begin
   puts "Hello World"
+  client = picasa_client 'account.yml'
+  albums = picasa_albums client
+  dir_name = "picasa_#{albums.first[:user]}"
+  Dir.mkdir dir_name
+  Dir.chdir dir_name
+  albums.each do |album|
+    Dir.mkdir album[:title]
+    Dir.chdir album[:title] do
+      print "Album #{album[:title]}\n"
+      photos = nil
+      until photos
+        begin
+          photos = picasa_photos client, album
+        rescue GData::Client::ServerError
+          "Server error, retrying\n"
+        end
+      end
+
+      photos.each do |photo|
+        print "#{album[:title]}/#{photo[:title]}\n"        
+        response = nil
+        until response
+          begin
+            response = client.get photo[:url]
+          rescue GData::Client::ServerError
+            "Server error, retrying\n"
+          end
+        end
+
+        File.open(photo[:title], 'w') { |f| f.write response.body }
+      end
+    end
+  end
 rescue => e
   puts e.message
   puts usage
