@@ -39,7 +39,7 @@ begin
     end
 
     Dir.chdir album[:title] do
-      print "Album #{album[:title]}\n"
+      puts "Checking for new files in '#{album[:title]}'"
       photos = nil
       until photos
         begin
