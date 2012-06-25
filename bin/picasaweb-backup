@@ -24,10 +24,20 @@ begin
   client = picasa_client account["username"], account["password"]
   albums = picasa_albums client
   dir_name = "picasa_#{albums.first[:user]}"
-  Dir.mkdir dir_name
+  
+  if !File.directory? dir_name
+    Dir.mkdir dir_name
+  end
+
   Dir.chdir dir_name
+
   albums.each do |album|
-    Dir.mkdir album[:title]
+
+    if !File.directory? album[:title]
+      Dir.mkdir album[:title]
+      puts "Creating directory for album '#{album[:title]}'"
+    end
+
     Dir.chdir album[:title] do
       print "Album #{album[:title]}\n"
       photos = nil
@@ -40,17 +50,19 @@ begin
       end
 
       photos.each do |photo|
-        puts "Downloading #{album[:title]}/#{photo[:title]}"
-        response = nil
-        until response
-          begin
-            response = client.get photo[:url]
-          rescue GData::Client::ServerError
-            "Server error, retrying\n"
+        if !File.exists? photo[:title]
+          puts "Downloading #{album[:title]}/#{photo[:title]}"
+          response = nil
+          until response
+            begin
+              response = client.get photo[:url]
+            rescue GData::Client::ServerError
+              "Server error, retrying\n"
+            end
           end
-        end
 
-        File.open(photo[:title], 'w') { |f| f.write response.body }
+          File.open(photo[:title], 'w') { |f| f.write response.body }
+        end
       end
     end
   end
