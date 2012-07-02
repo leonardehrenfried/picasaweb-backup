@@ -14,7 +14,7 @@ OptionParser.new('Backing up your Picasaweb photos') do |opt|
   begin
     opt.parse!(ARGV)
   rescue
-    puts usage 
+    puts usage
    end
 end
 
@@ -24,7 +24,7 @@ begin
   client = picasa_client account["username"], account["password"]
   albums = picasa_albums client
   dir_name = "Albums"
-  
+
   if !File.directory? dir_name
     Dir.mkdir dir_name
   end
@@ -49,9 +49,10 @@ begin
         end
       end
 
+      downloaded_photos = 0
       photos.each do |photo|
         if !File.exists? photo[:title]
-          puts "Downloading #{album[:title]}/#{photo[:title]}"
+          puts " ==> #{photo[:title]}"
           response = nil
           until response
             begin
@@ -62,7 +63,11 @@ begin
           end
 
           File.open(photo[:title], 'w') { |f| f.write response.body }
+          downloaded_photos += 1
         end
+      end
+      if downloaded_photos == 0
+        puts "==> no new photos found"
       end
     end
   end
