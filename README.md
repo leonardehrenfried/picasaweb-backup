@@ -1,6 +1,7 @@
 # Picasaweb::Backup
 
-TODO: Write a gem description
+A gem and executable to backup all your photos stored on Google's Picasaweb
+service.
 
 ## Installation
 
@@ -18,7 +19,19 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Create an empty folder an place a file called `account.yml` with the following
+content:
+
+```yaml
+username: YOUR_USERNAME
+password: PASSWORD
+```
+
+In the same directory run the following command
+```bash
+$ picasaweb-backup
+```
+and watch your photos being downloaded.
 
 ## Contributing
 
