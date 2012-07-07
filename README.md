@@ -1,10 +1,3 @@
-```
-       _                            _        _            _
-  _ __(_)__ __ _ _____ ___ __ _____| |__ ___| |__ __ _ __| |___  _ _ __
- | '_ \ / _/ _` (_-< _` \ V  V / -_) '_ \___| '_ \ _` / _| / / || | '_ \
- | .__/_\__\__,_/__\__,_|\_/\_/\___|_.__/   |_.__\__,_\__|_\_\\_,_| .__/
- |_|                                                              |_|
-```
 # Picasaweb::Backup
 
 A gem and executable to backup all your photos stored on Google's Picasaweb
@@ -25,7 +18,19 @@ Or install it yourself as:
     $ gem install picasaweb-backup
 
 ## Usage
+```
+       _                            _        _            _
+  _ __(_)__ __ _ _____ ___ __ _____| |__ ___| |__ __ _ __| |___  _ _ __
+ | '_ \ / _/ _` (_-< _` \ V  V / -_) '_ \___| '_ \ _` / _| / / || | '_ \
+ | .__/_\__\__,_/__\__,_|\_/\_/\___|_.__/   |_.__\__,_\__|_\_\\_,_| .__/
+ |_|                                                              |_|
 
+version 0.2.0
+
+Options
+        --dir DIR                    optional directory in which the download should be executed
+    -h, --help                       print this help section
+```
 Create an empty folder an place a file called `account.yml` with the following
 content:
 
