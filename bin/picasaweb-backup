@@ -2,21 +2,28 @@
 require 'rubygems'
 require 'optparse'
 require 'picasaweb-backup'
+require 'artii'
 
 data = {}
-usage = %{picasaweb-backup v.#{Picasaweb::Backup::VERSION}}
+usage =
 
-OptionParser.new('Backing up your Picasaweb photos') do |opt|
-  opt.version = '2'
-  opt.on('--dir DIR') do |dir|
+opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
+  artii = Artii::Base.new :font => "small"
+  opt.banner = artii.send :output, "picasaweb-backup"
+  opt.separator ""
+  opt.separator "version #{Picasaweb::Backup::VERSION}"
+  opt.separator ""
+  opt.separator "Options"
+  opt.on("--dir DIR", "optional directory in which the download should be executed") do |dir|
     data[:dir] = dir
   end
-  begin
-    opt.parse!(ARGV)
-  rescue
-    puts usage
-   end
+  opt.on("-h","--help", "print this help section") do
+    puts opt_parser
+    exit 0
+  end
 end
+
+opt_parser.parse!(ARGV)
 
 begin
   account = File.open("account.yml", 'r') { |f| YAML.load f }
