@@ -4,7 +4,7 @@ require 'optparse'
 require 'picasaweb-backup'
 require 'artii'
 
-data = {}
+opts = {}
 usage =
 
 opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
@@ -15,7 +15,7 @@ opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
   opt.separator ""
   opt.separator "Options"
   opt.on("--dir DIR", "optional directory in which the download should be executed") do |dir|
-    data[:dir] = dir
+    opts[:dir] = dir
   end
   opt.on("-h","--help", "print this help section") do
     puts opt_parser
@@ -26,6 +26,12 @@ end
 opt_parser.parse!(ARGV)
 
 begin
+
+  if opts[:dir]
+    puts "Changing working directory to #{opts[:dir]}"
+    Dir.chdir opts[:dir]
+  end
+
   account = File.open("account.yml", 'r') { |f| YAML.load f }
   verify_account account
   client = picasa_client account["username"], account["password"]
