@@ -3,13 +3,14 @@ require 'rubygems'
 require 'optparse'
 require 'picasaweb-backup'
 require 'artii'
+require 'colored'
 
 opts = {}
 usage =
 
 opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
   artii = Artii::Base.new :font => "small"
-  opt.banner = artii.send :output, "picasaweb-backup"
+  opt.banner = artii.send(:output, "picasaweb-backup").green
   opt.separator ""
   opt.separator "version #{Picasaweb::Backup::VERSION}"
   opt.separator ""
@@ -85,7 +86,8 @@ begin
     end
   end
 rescue => e
-  puts e.message
+  puts "ERROR: #{e.message}".red
+  puts ""
   puts opt_parser
 end
 

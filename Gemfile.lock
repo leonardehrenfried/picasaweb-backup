@@ -1,10 +1,14 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    artii (2.0.1)
+    colored (1.2)
     gdata_19 (1.1.5)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  artii (~> 2.0.1)
+  colored (~> 1.2)
   gdata_19 (~> 1.1.5)

@@ -10,8 +10,9 @@ Gem::Specification.new do |gem|
 
   gem.homepage = 'http://github.com/lenniboy/picasaweb-backup'
 
-  gem.add_dependency('gdata_19', '~> 1.1.5')
-  gem.add_dependency('artii', '~> 2.0.1')
+  gem.add_dependency('gdata_19',  '~> 1.1.5')
+  gem.add_dependency('artii',     '~> 2.0.1')
+  gem.add_dependency('colored',   '~> 1.2')
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
