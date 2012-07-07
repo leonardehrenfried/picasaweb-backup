@@ -3,17 +3,9 @@
 A gem and executable to backup all your photos stored on Google's Picasaweb
 service.
 
+The original code came from http://blog.costan.us/2010/01/automated-backup-for-picasa-web-albums.html
+
 ## Installation
-
-Add this line to your application's Gemfile:
-
-    gem 'picasaweb-backup'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
 
     $ gem install picasaweb-backup
 
