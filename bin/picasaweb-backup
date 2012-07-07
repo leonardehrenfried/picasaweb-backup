@@ -80,6 +80,6 @@ begin
   end
 rescue => e
   puts e.message
-  puts usage
+  puts opt_parser
 end
 
