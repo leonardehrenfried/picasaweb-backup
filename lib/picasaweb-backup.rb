@@ -19,6 +19,7 @@ module Picasaweb
       @opts = opts
       if @opts[:log]
         @logger = Logger.new "picasaweb-backup.log", shift_age = "monthly"
+        @logger.datetime_format = "%Y-%m-%d %H:%M"
       end
     end
 
