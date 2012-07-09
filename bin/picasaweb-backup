@@ -34,11 +34,6 @@ cli = Picasaweb::CLI.new opts
 
 begin
 
-  if opts[:dir]
-    cli.print "Changing working directory to #{opts[:dir]}"
-    Dir.chdir opts[:dir]
-  end
-
   account = File.open("account.yml", 'r') { |f| YAML.load f }
   verify_account account
   client = picasa_client account["username"], account["password"]

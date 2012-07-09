@@ -17,10 +17,20 @@ module Picasaweb
 
     def initialize opts
       @opts = opts
+
+      if opts[:dir]
+        Dir.chdir opts[:dir]
+      end
+
       if @opts[:log]
         @logger = Logger.new "picasaweb-backup.log", shift_age = "monthly"
         @logger.datetime_format = "%Y-%m-%d %H:%M"
       end
+
+      if opts[:dir]
+        self.print "Changing working directory to #{opts[:dir]}"
+      end
+
     end
 
     def print msg
