@@ -3,14 +3,13 @@
 # The script downloads the original version of the photos, and is not limited to
 # 1600x1200 thumbnails.
 #
-# Author:: Victor Costan
-# Copyright:: Copyright (C) 2010 Victor Costan
+# Authors:: Victor Costan, Leonard Ehrenfried
 # License:: MIT
 
-require "picasaweb-backup/version"
-require 'yaml'
-require 'rubygems'
-require 'gdata'
+require "version"
+require "yaml"
+require "rubygems"
+require "gdata"
 
 module Picasaweb
   module Backup
