@@ -18,6 +18,11 @@ opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
   opt.on("--dir DIR", "optional directory in which the download should be executed") do |dir|
     opts[:dir] = dir
   end
+
+  opt.on "-l","--log", "log to a file instead of stout" do
+    opts[:log] = true
+  end
+
   opt.on("-h","--help", "print this help section") do
     puts opt_parser
     exit 0
@@ -25,6 +30,7 @@ opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
 end
 
 opt_parser.parse!(ARGV)
+cli = Picasaweb::CLI.new opts
 
 begin
 

@@ -12,8 +12,14 @@ require "rubygems"
 require "gdata"
 
 module Picasaweb
-  module Backup
-    # Your code goes here...
+  class CLI
+    def initialize opts
+      @opts = opts
+      if @opts[:log]
+        @logger = Logger.new "picasaweb-backup.log", "monthly"
+      end
+    end
+
   end
 end
 
