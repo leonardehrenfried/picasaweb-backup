@@ -10,13 +10,23 @@ require "version"
 require "yaml"
 require "rubygems"
 require "gdata"
+require "logger"
 
 module Picasaweb
   class CLI
+
     def initialize opts
       @opts = opts
       if @opts[:log]
-        @logger = Logger.new "picasaweb-backup.log", "monthly"
+        @logger = Logger.new "picasaweb-backup.log", shift_age = "monthly"
+      end
+    end
+
+    def print msg
+      if @logger
+        @logger.info msg
+      else
+        puts msg
       end
     end
 

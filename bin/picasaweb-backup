@@ -35,7 +35,7 @@ cli = Picasaweb::CLI.new opts
 begin
 
   if opts[:dir]
-    puts "Changing working directory to #{opts[:dir]}"
+    cli.print "Changing working directory to #{opts[:dir]}"
     Dir.chdir opts[:dir]
   end
 
@@ -55,11 +55,11 @@ begin
 
     if !File.directory? album[:title]
       Dir.mkdir album[:title]
-      puts "Creating directory for album '#{album[:title]}'"
+      cli.print "Creating directory for album '#{album[:title]}'"
     end
 
     Dir.chdir album[:title] do
-      puts "Checking for new files in '#{album[:title]}'"
+      cli.print "Checking for new files in '#{album[:title]}'"
       photos = nil
       until photos
         begin
@@ -72,7 +72,7 @@ begin
       downloaded_photos = 0
       photos.each do |photo|
         if !File.exists? photo[:title]
-          puts " ==> #{photo[:title]}"
+          cli.print " ==> #{photo[:title]}"
           response = nil
           until response
             begin
@@ -87,13 +87,13 @@ begin
         end
       end
       if downloaded_photos == 0
-        puts "==> no new photos found"
+        cli.print "==> no new photos found"
       end
     end
   end
 rescue => e
-  puts "ERROR: #{e.message}".red
-  puts ""
-  puts opt_parser
+  cli.print "ERROR: #{e.message}".red
+  cli.print ""
+  cli.print opt_parser
 end
 
