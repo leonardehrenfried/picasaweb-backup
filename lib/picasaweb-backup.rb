@@ -57,8 +57,9 @@ module Picasaweb
     end
 
     def ensure_exists dir
-      if !File.directory? dir_name
-        Dir.mkdir dir_name
+      if !File.directory? dir
+        Dir.mkdir dir
+        self.print "Creating directory '#{dir}'"
       end
     end
 
@@ -76,13 +77,13 @@ module Picasaweb
       albums
     end
 
-    def download_album album
+    def download_album client, album
       Dir.chdir album[:title] do
         self.print "Checking for new photos in '#{album[:title]}'"
         photos = nil
         until photos
           begin
-            photos = picasa_photos client, album
+            photos = get_photos client, album
           rescue GData::Client::ServerError
             "Server error, retrying\n"
           end
@@ -111,46 +112,41 @@ module Picasaweb
       end
     end
 
-    def get_photos
+    # Retrieves all photos from an album.
+    def get_photos(client, album)
+      uri = "http://picasaweb.google.com/data/feed/api/user/" +
+        "#{album[:user] || 'default'}/albumid/#{album[:id]}?kind=photo&imgmax=d"
+
+      feed = client.get(uri).to_xml
+      photos = []
+      feed.elements.each('entry') do |entry|
+        next unless entry.elements['gphoto:id']
+        next unless entry.elements['media:group']
+        photo = { :id => entry.elements['gphoto:id'].text,
+          :album_id => entry.elements['gphoto:albumid'].text,
+          :title => entry.elements['title'].text }
+        entry.elements['media:group'].elements.each('media:content') do |content|
+          photo[:url] = content.attribute('url').value
+        end
+        photos << photo
+      end
+      photos
+    end
 
     def start_backup
       verify_account @account
       client = picasa_client @account["username"], @account["password"]
-      albums = picasa_albums client
+      albums = get_albums client
 
       ensure_exists ALBUM_DIR
       Dir.chdir ALBUM_DIR
 
       albums.each do |album|
         ensure_exists album[:title]
-        download_album album
+        download_album client, album
       end
 
     end
-
   end
 end
-
-# Retrieves all photos from an album.
-def picasa_photos(client, album)
-  uri = "http://picasaweb.google.com/data/feed/api/user/" +
-    "#{album[:user] || 'default'}/albumid/#{album[:id]}?kind=photo&imgmax=d"
-
-  feed = client.get(uri).to_xml
-  photos = []
-  feed.elements.each('entry') do |entry|
-    next unless entry.elements['gphoto:id']
-    next unless entry.elements['media:group']
-    photo = { :id => entry.elements['gphoto:id'].text,
-      :album_id => entry.elements['gphoto:albumid'].text,
-      :title => entry.elements['title'].text }
-    entry.elements['media:group'].elements.each('media:content') do |content|
-      photo[:url] = content.attribute('url').value
-    end
-    photos << photo
-  end
-  photos
-end
-
-
 
