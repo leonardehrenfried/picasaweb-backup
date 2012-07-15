@@ -6,7 +6,6 @@ require 'artii'
 require 'colored'
 
 opts = {}
-usage =
 
 opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
   artii = Artii::Base.new :font => "small"
@@ -34,58 +33,8 @@ cli = Picasaweb::CLI.new opts
 
 begin
 
-  account = File.open("account.yml", 'r') { |f| YAML.load f }
-  verify_account account
-  client = picasa_client account["username"], account["password"]
-  albums = picasa_albums client
-  dir_name = "Albums"
+  cli.start_backup
 
-  if !File.directory? dir_name
-    Dir.mkdir dir_name
-  end
-
-  Dir.chdir dir_name
-
-  albums.each do |album|
-
-    if !File.directory? album[:title]
-      Dir.mkdir album[:title]
-      cli.print "Creating directory for album '#{album[:title]}'"
-    end
-
-    Dir.chdir album[:title] do
-      cli.print "Checking for new files in '#{album[:title]}'"
-      photos = nil
-      until photos
-        begin
-          photos = picasa_photos client, album
-        rescue GData::Client::ServerError
-          "Server error, retrying\n"
-        end
-      end
-
-      downloaded_photos = 0
-      photos.each do |photo|
-        if !File.exists? photo[:title]
-          cli.print " ==> #{photo[:title]}"
-          response = nil
-          until response
-            begin
-              response = client.get photo[:url]
-            rescue GData::Client::ServerError
-              "Server error, retrying\n"
-            end
-          end
-
-          File.open(photo[:title], 'w') { |f| f.write response.body }
-          downloaded_photos += 1
-        end
-      end
-      if downloaded_photos == 0
-        cli.print "==> no new photos found"
-      end
-    end
-  end
 rescue => e
   cli.print "ERROR: #{e.message}".red
   cli.print ""
