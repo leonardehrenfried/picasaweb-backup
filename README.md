@@ -23,8 +23,8 @@ Options
         --dir DIR                    optional directory in which the download should be executed
     -h, --help                       print this help section
 ```
-Create an empty folder an place a file called `account.yml` with the following
-content:
+Create an empty folder and place a file called `account.yml` with the following
+content (make sure you leave a space after the colon):
 
 ```yaml
 username: YOUR_USERNAME
