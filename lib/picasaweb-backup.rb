@@ -12,6 +12,13 @@ require "rubygems"
 require "gdata"
 require "logger"
 
+#monkey-patch logger formatting
+class Logger
+  def format_message(level, time, progname, msg)
+    "#{time.strftime("%Y-%m-%d %H:%M:%S")} #{msg}\n"
+  end
+end
+
 module Picasaweb
   class CLI
     ALBUM_DIR = "Albums"
@@ -24,7 +31,6 @@ module Picasaweb
 
       if @opts[:log]
         @logger = Logger.new "picasaweb-backup.log", shift_age = "monthly"
-        @logger.datetime_format = "%Y-%m-%d %H:%M"
       end
 
       if opts[:dir]
