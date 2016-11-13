@@ -15,3 +15,7 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
+
+tokens.yaml
+client_id.json
+Albums

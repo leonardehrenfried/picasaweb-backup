@@ -8,9 +8,11 @@
 
 require "version"
 require "yaml"
-require "rubygems"
-require "gdata"
 require "logger"
+require 'googleauth'
+require 'googleauth/stores/file_token_store'
+require 'http'
+require 'nokogiri'
 
 #monkey-patch logger formatting
 class Logger
@@ -20,8 +22,28 @@ class Logger
 end
 
 module Picasaweb
+  class Client
+    def initialize auth
+      @auth = auth
+    end
+
+    def get(url)
+      res = HTTP[:authorization => "Bearer #{@auth.access_token}"].get(url)
+      Nokogiri::XML(res.body)
+    end
+
+    def download(photo)
+      response = HTTP.get(photo[:url])
+      File.open(photo[:title], 'w') { |f| f.write response.body }
+    end
+
+  end
+
   class CLI
+
     ALBUM_DIR = "Albums"
+    OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
+
     def initialize opts
       @opts = opts
 
@@ -36,8 +58,6 @@ module Picasaweb
       if opts[:dir]
         self.print "Changing working directory to #{opts[:dir]}"
       end
-
-      @account = File.open("account.yml", 'r') { |f| YAML.load f }
     end
 
     def print msg
@@ -46,20 +66,6 @@ module Picasaweb
       else
         puts msg
       end
-    end
-
-    def verify_account account
-      if account["username"].nil?
-        raise "Please add your username to account.yml"
-      elsif account["password"].nil?
-        raise "Please add your password to account.yml"
-      end
-    end
-
-    def picasa_client(username, password)
-      client = GData::Client::Photos.new
-      client.clientlogin(username, password)
-      client
     end
 
     def ensure_exists dir
@@ -71,16 +77,15 @@ module Picasaweb
 
     # Retrieves all albums for a user.
     def get_albums(client, user = nil)
-      uri = "http://picasaweb.google.com/data/feed/api/user/#{user || 'default'}"
-      feed = client.get(uri).to_xml
-      albums = []
-      feed.elements.each('entry') do |entry|
-        next unless entry.elements['gphoto:id']
-        albums << { :id => entry.elements['gphoto:id'].text,
-                    :user => entry.elements['gphoto:user'].text,
-                    :title => entry.elements['title'].text }
+      uri = "https://picasaweb.google.com/data/feed/api/user/#{user || 'default'}"
+      feed = client.get(uri)
+      entries = feed.css("entry")
+
+      entries.map do |entry|
+        { :id => entry.css('gphoto|id').text,
+          :user => entry.css('gphoto|user').text,
+          :title => entry.css('title').text }
       end
-      albums
     end
 
     def download_album client, album
@@ -88,27 +93,14 @@ module Picasaweb
         self.print "Checking for new photos in '#{album[:title]}'"
         photos = nil
         until photos
-          begin
-            photos = get_photos client, album
-          rescue GData::Client::ServerError
-            "Server error, retrying\n"
-          end
+          photos = get_photos client, album
         end
 
         downloaded_photos = 0
         photos.each do |photo|
           if !File.exists? photo[:title]
             self.print " ==> #{photo[:title]}"
-            response = nil
-            until response
-              begin
-                response = client.get photo[:url]
-              rescue GData::Client::ServerError
-                "Server error, retrying\n"
-              end
-            end
-
-            File.open(photo[:title], 'w') { |f| f.write response.body }
+            client.download(photo)
             downloaded_photos += 1
           end
         end
@@ -120,18 +112,17 @@ module Picasaweb
 
     # Retrieves all photos from an album.
     def get_photos(client, album)
-      uri = "http://picasaweb.google.com/data/feed/api/user/" +
+      uri = "https://picasaweb.google.com/data/feed/api/user/" +
         "#{album[:user] || 'default'}/albumid/#{album[:id]}?kind=photo&imgmax=d"
 
-      feed = client.get(uri).to_xml
+      entries = client.get(uri).css("entry")
+
       photos = []
-      feed.elements.each('entry') do |entry|
-        next unless entry.elements['gphoto:id']
-        next unless entry.elements['media:group']
-        photo = { :id => entry.elements['gphoto:id'].text,
-          :album_id => entry.elements['gphoto:albumid'].text,
-          :title => entry.elements['title'].text }
-        entry.elements['media:group'].elements.each('media:content') do |content|
+      entries.each do |entry|
+        photo = { :id       => entry.css('gphoto|id').text,
+                  :album_id => entry.css('gphoto|albumid').text,
+                  :title    => entry.css('title').text }
+        entry.css('media|group > media|content[url]').each do |content|
           photo[:url] = content.attribute('url').value
         end
         photos << photo
@@ -140,9 +131,29 @@ module Picasaweb
     end
 
     def start_backup
-      verify_account @account
-      client = picasa_client @account["username"], @account["password"]
-      albums = get_albums client
+
+      scope = 'https://picasaweb.google.com/data/'
+      client_id = Google::Auth::ClientId.from_file('client_id.json')
+      token_store = Google::Auth::Stores::FileTokenStore.new(
+        :file => 'tokens.yaml')
+      authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
+
+      user_id = "picasaweb-backup"
+
+      credentials = authorizer.get_credentials(user_id)
+
+      if credentials.nil?
+        url = authorizer.get_authorization_url(base_url: OOB_URI )
+        puts "Open #{url} in your browser and enter the resulting code:"
+        code = gets
+        credentials = authorizer.get_and_store_credentials_from_code(
+          user_id: user_id, code: code, base_url: OOB_URI)
+      elsif
+        puts "Found credentials"
+      end
+
+      client = Client.new(credentials)
+      albums = get_albums(client)
 
       ensure_exists ALBUM_DIR
       Dir.chdir ALBUM_DIR
