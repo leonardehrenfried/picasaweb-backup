@@ -23,12 +23,35 @@ end
 
 module Picasaweb
   class Client
-    def initialize auth
-      @auth = auth
+
+    OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
+
+    def initialize
+      scope = 'https://picasaweb.google.com/data/'
+      client_id = Google::Auth::ClientId.from_file('client_id.json')
+      token_store = Google::Auth::Stores::FileTokenStore.new(
+        :file => 'tokens.yaml')
+      authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
+
+      user_id = "picasaweb-backup"
+
+      credentials = authorizer.get_credentials(user_id)
+      puts(credentials.nil?)
+
+      if credentials.nil?
+        url = authorizer.get_authorization_url(base_url: OOB_URI )
+        puts "Open #{url} in your browser and enter the resulting code:"
+        code = gets
+        @credentials = authorizer.get_and_store_credentials_from_code(
+          user_id: user_id, code: code, base_url: OOB_URI)
+      else
+        puts "Found token #{credentials.access_token}"
+        @credentials = credentials
+      end
     end
 
     def get(url)
-      res = HTTP[:authorization => "Bearer #{@auth.access_token}"].get(url)
+      res = HTTP[:authorization => "Bearer #{@credentials.access_token}"].get(url)
       Nokogiri::XML(res.body)
     end
 
@@ -42,22 +65,20 @@ module Picasaweb
   class CLI
 
     ALBUM_DIR = "Albums"
-    OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
 
     def initialize opts
       @opts = opts
+      @client = Client.new
 
       if opts[:dir]
         Dir.chdir opts[:dir]
+        self.print "Changing working directory to #{opts[:dir]}"
       end
 
       if @opts[:log]
         @logger = Logger.new "picasaweb-backup.log", shift_age = "monthly"
       end
 
-      if opts[:dir]
-        self.print "Changing working directory to #{opts[:dir]}"
-      end
     end
 
     def print msg
@@ -131,36 +152,14 @@ module Picasaweb
     end
 
     def start_backup
-
-      scope = 'https://picasaweb.google.com/data/'
-      client_id = Google::Auth::ClientId.from_file('client_id.json')
-      token_store = Google::Auth::Stores::FileTokenStore.new(
-        :file => 'tokens.yaml')
-      authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
-
-      user_id = "picasaweb-backup"
-
-      credentials = authorizer.get_credentials(user_id)
-
-      if credentials.nil?
-        url = authorizer.get_authorization_url(base_url: OOB_URI )
-        puts "Open #{url} in your browser and enter the resulting code:"
-        code = gets
-        credentials = authorizer.get_and_store_credentials_from_code(
-          user_id: user_id, code: code, base_url: OOB_URI)
-      elsif
-        puts "Found credentials"
-      end
-
-      client = Client.new(credentials)
-      albums = get_albums(client)
+      albums = get_albums(@client)
 
       ensure_exists ALBUM_DIR
       Dir.chdir ALBUM_DIR
 
       albums.each do |album|
         ensure_exists album[:title]
-        download_album client, album
+        download_album @client, album
       end
 
     end
