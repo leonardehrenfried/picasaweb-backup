@@ -37,6 +37,7 @@ begin
 
 rescue => e
   cli.print "ERROR: #{e.message}".red
+  puts e.backtrace
   cli.print ""
   cli.print opt_parser
 end

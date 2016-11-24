@@ -36,7 +36,6 @@ module Picasaweb
       user_id = "picasaweb-backup"
 
       credentials = authorizer.get_credentials(user_id)
-      puts(credentials.nil?)
 
       if credentials.nil?
         url = authorizer.get_authorization_url(base_url: OOB_URI )
@@ -49,6 +48,37 @@ module Picasaweb
         @credentials = credentials
       end
     end
+
+    # Retrieves all albums for a user.
+    def get_albums
+      uri = "https://picasaweb.google.com/data/feed/api/user/default"
+      feed = get(uri)
+      entries = feed.css("entry")
+
+      entries.map do |entry|
+        { :id => entry.css('gphoto|id').text,
+          :user => entry.css('gphoto|user').text,
+          :title => entry.css('title').text }
+      end
+    end
+
+    # Retrieves all photos from an album.
+    def get_photos(album)
+      uri = "https://picasaweb.google.com/data/feed/api/user/" +
+        "default/albumid/#{album[:id]}?kind=photo&imgmax=d"
+
+      entries = get(uri).css("entry")
+
+      entries.map do |entry|
+        url = entry.css('media|group > media|content[url]').first.attribute("url").value
+        photo = { :id       => entry.css('gphoto|id').text,
+                  :album_id => entry.css('gphoto|albumid').text,
+                  :title    => entry.css('title').text,
+                  :url      => url
+                }
+      end
+    end
+
 
     def get(url)
       res = HTTP[:authorization => "Bearer #{@credentials.access_token}"].get(url)
@@ -96,25 +126,12 @@ module Picasaweb
       end
     end
 
-    # Retrieves all albums for a user.
-    def get_albums(client, user = nil)
-      uri = "https://picasaweb.google.com/data/feed/api/user/#{user || 'default'}"
-      feed = client.get(uri)
-      entries = feed.css("entry")
-
-      entries.map do |entry|
-        { :id => entry.css('gphoto|id').text,
-          :user => entry.css('gphoto|user').text,
-          :title => entry.css('title').text }
-      end
-    end
-
-    def download_album client, album
+    def download_album(client, album)
       Dir.chdir album[:title] do
         self.print "Checking for new photos in '#{album[:title]}'"
         photos = nil
         until photos
-          photos = get_photos client, album
+          photos = client.get_photos(album)
         end
 
         downloaded_photos = 0
@@ -131,28 +148,10 @@ module Picasaweb
       end
     end
 
-    # Retrieves all photos from an album.
-    def get_photos(client, album)
-      uri = "https://picasaweb.google.com/data/feed/api/user/" +
-        "#{album[:user] || 'default'}/albumid/#{album[:id]}?kind=photo&imgmax=d"
-
-      entries = client.get(uri).css("entry")
-
-      photos = []
-      entries.each do |entry|
-        photo = { :id       => entry.css('gphoto|id').text,
-                  :album_id => entry.css('gphoto|albumid').text,
-                  :title    => entry.css('title').text }
-        entry.css('media|group > media|content[url]').each do |content|
-          photo[:url] = content.attribute('url').value
-        end
-        photos << photo
+        def start_backup
+      albums = @client.get_albums.select do |album|
+        album[:title].downcase != "auto backup"
       end
-      photos
-    end
-
-    def start_backup
-      albums = get_albums(@client)
 
       ensure_exists ALBUM_DIR
       Dir.chdir ALBUM_DIR
