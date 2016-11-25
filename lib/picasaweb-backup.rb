@@ -36,6 +36,7 @@ module Picasaweb
       user_id = "picasaweb-backup"
 
       credentials = authorizer.get_credentials(user_id)
+      credentials.fetch_access_token!
 
       if credentials.nil?
         url = authorizer.get_authorization_url(base_url: OOB_URI )
@@ -148,7 +149,7 @@ module Picasaweb
       end
     end
 
-        def start_backup
+    def start_backup
       albums = @client.get_albums.select do |album|
         album[:title].downcase != "auto backup"
       end
