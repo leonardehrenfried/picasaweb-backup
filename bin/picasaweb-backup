@@ -29,16 +29,23 @@ opt_parser = OptionParser.new('Backing up your Picasaweb photos') do |opt|
 end
 
 opt_parser.parse!(ARGV)
-cli = Picasaweb::CLI.new opts
 
-begin
+if !File.exists?("client_id.json")
+  puts("No file client_id.json found. \n" \
+       "Please go to https://console.developers.google.com/apis/credentials "\
+       "to generate an OAuth CLI app and download, client_id.json file and "\
+       "place it in the directory where you run picasaweb-backup.")
 
-  cli.start_backup
+else
 
-rescue => e
-  cli.print "ERROR: #{e.message}".red
-  puts e.backtrace
-  cli.print ""
-  cli.print opt_parser
+  begin
+
+    cli = Picasaweb::CLI.new opts
+    cli.start_backup
+
+  rescue => e
+    puts "ERROR: #{e.message}".red
+    puts e.backtrace
+  end
+
 end
-

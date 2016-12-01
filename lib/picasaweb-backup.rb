@@ -29,14 +29,12 @@ module Picasaweb
     def initialize
       scope = 'https://picasaweb.google.com/data/'
       client_id = Google::Auth::ClientId.from_file('client_id.json')
-      token_store = Google::Auth::Stores::FileTokenStore.new(
-        :file => 'tokens.yaml')
+      token_store = Google::Auth::Stores::FileTokenStore.new(:file => 'tokens.yaml')
       authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
 
       user_id = "picasaweb-backup"
 
       credentials = authorizer.get_credentials(user_id)
-      credentials.fetch_access_token!
 
       if credentials.nil?
         url = authorizer.get_authorization_url(base_url: OOB_URI )
@@ -45,7 +43,8 @@ module Picasaweb
         @credentials = authorizer.get_and_store_credentials_from_code(
           user_id: user_id, code: code, base_url: OOB_URI)
       else
-        puts "Found token #{credentials.access_token}"
+        puts "Found token #{credentials.access_token}. Refreshing..."
+        credentials.fetch_access_token!
         @credentials = credentials
       end
     end
@@ -120,7 +119,7 @@ module Picasaweb
       end
     end
 
-    def ensure_exists dir
+    def ensure_exists(dir)
       if !File.directory? dir
         Dir.mkdir dir
         self.print "Creating directory '#{dir}'"
@@ -154,12 +153,12 @@ module Picasaweb
         album[:title].downcase != "auto backup"
       end
 
-      ensure_exists ALBUM_DIR
+      ensure_exists(ALBUM_DIR)
       Dir.chdir ALBUM_DIR
 
       albums.each do |album|
         ensure_exists album[:title]
-        download_album @client, album
+        download_album(@client, album)
       end
 
     end
